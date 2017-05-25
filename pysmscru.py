@@ -12,7 +12,8 @@ from datetime import datetime
 from time import sleep
 import smtplib
 
-from urllib2 import urlopen, quote
+from urllib.parse import quote
+import urllib3
 
 import logging 
 log = logging.getLogger(__name__)
@@ -229,8 +230,9 @@ class SMSC(object):
                 log.debug('Error while conecting smsc.ru HTTP API, retry %s of %s after pause', i, self.retries, self.retry_pause)
                 sleep(self.retry_pause)
 
-            data = urlopen(url, post_data, timeout=self.http_timeout) # Python 2.6 required
-            ret = str(data.read())
+            http = urllib3.PoolManager()
+            response = http.request('POST', url, body=post_data, timeout=self.http_timeout)
+            ret = response.data.decode('utf-8')
             i += 1
 
         if ret == "":
